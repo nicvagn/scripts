@@ -8,5 +8,5 @@ html_files=`ls ./*.html`
 for f in $(ls ./*.html)
 do
   echo $f
-  tidy -i -ashtml -utf8  -o ./"{$f}tidy"
+  tidy -i -ashtml -utf8  -modify $f
 done
