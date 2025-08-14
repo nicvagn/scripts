@@ -1,0 +1,14 @@
+# Make sure virtualenvwrapper is loaded
+export WORKON_HOME="${WORKON_HOME:-$HOME/.virtualenvs}"
+if [ -f "$HOME/.local/bin/virtualenvwrapper.sh" ]; then
+    source "$HOME/.local/bin/virtualenvwrapper.sh"
+else
+    echo ".envrc FAIL"
+fi
+
+
+# Name of your venvwrapper environment
+VENV_NAME="gambit-pairing"
+
+# Activate it
+workon "$VENV_NAME"
