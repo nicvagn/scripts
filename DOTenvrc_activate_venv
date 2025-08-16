@@ -1,14 +1,10 @@
-# Make sure virtualenvwrapper is loaded
-export WORKON_HOME="${WORKON_HOME:-$HOME/.virtualenvs}"
-if [ -f "$HOME/.local/bin/virtualenvwrapper.sh" ]; then
-    source "$HOME/.local/bin/virtualenvwrapper.sh"
-else
-    echo ".envrc FAIL"
+# Create venv if needed
+if [[ ! -d .venv ]]; then
+    echo "Creating virtual environment..."
+    python -m venv .venv
 fi
 
+# Activate environment
+source_env .venv
 
-# Name of your venvwrapper environment
-VENV_NAME="gambit-pairing"
-
-# Activate it
-workon "$VENV_NAME"
+ 
