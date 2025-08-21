@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Git Repository Find and Replace Script
-# Usage: ./find_replace.sh "search_text" "replace_text" [file_pattern]
+# Usage: ./git_find_replace.sh "search_text" "replace_text" [file_pattern]
 
 set -e  # Exit on any error
 
@@ -12,14 +12,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to display usage
 show_usage() {
     echo "Usage: $0 \"search_text\" \"replace_text\" [file_pattern]"
-    echo ""
-    echo "Arguments:"
-    echo "  search_text    - Text to search for (required)"
-    echo "  replace_text   - Text to replace with (required)"
-    echo "  file_pattern   - File pattern to search in (optional, default: all files)"
     echo ""
     echo "Examples:"
     echo "  $0 \"oldFunction\" \"newFunction\""
@@ -31,31 +25,26 @@ show_usage() {
     echo "  -p, --preview  - Preview changes without applying them"
 }
 
-# Parse command line arguments
+# Parse arguments
 PREVIEW_MODE=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help)
-            show_usage
-            exit 0
-            ;;
+            show_usage; exit 0 ;;
         -p|--preview)
-            PREVIEW_MODE=true
-            shift
-            ;;
+            PREVIEW_MODE=true; shift ;;
         *)
-            break
-            ;;
+            break ;;
     esac
 done
 
-# Check if we're in a git repository
+# Ensure we are inside a Git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
     echo -e "${RED}Error: Not in a git repository${NC}"
     exit 1
 fi
 
-# Check arguments
+# Validate arguments
 if [ $# -lt 2 ]; then
     echo -e "${RED}Error: Missing required arguments${NC}"
     show_usage
@@ -66,25 +55,20 @@ SEARCH_TEXT="$1"
 REPLACE_TEXT="$2"
 FILE_PATTERN="${3:-*}"
 
-# Validate inputs
-if [ -z "$SEARCH_TEXT" ]; then
-    echo -e "${RED}Error: Search text cannot be empty${NC}"
-    exit 1
-fi
+# Escape strings for safety in grep and sed
+ESCAPED_SEARCH=$(printf '%s\n' "$SEARCH_TEXT" | sed 's/[][\/.^$*]/\\&/g')
+ESCAPED_REPLACE=$(printf '%s\n' "$REPLACE_TEXT" | sed 's/[&/]/\\&/g')
 
 echo -e "${BLUE}Git Repository Find and Replace${NC}"
-echo -e "${BLUE}===============================${NC}"
 echo -e "Search for: ${YELLOW}$SEARCH_TEXT${NC}"
 echo -e "Replace with: ${YELLOW}$REPLACE_TEXT${NC}"
 echo -e "File pattern: ${YELLOW}$FILE_PATTERN${NC}"
-echo -e "Preview mode: ${YELLOW}$PREVIEW_MODE${NC}"
-echo ""
+echo -e "Preview mode: ${YELLOW}$PREVIEW_MODE${NC}\n"
 
-# Find files that contain the search text
+# Find matching files
 echo -e "${BLUE}Searching for files containing '$SEARCH_TEXT'...${NC}"
-
-# Use git ls-files to only search tracked files, then filter by pattern and grep for content
-MATCHING_FILES=$(git ls-files | grep -E "$(echo "$FILE_PATTERN" | sed 's/\*/\.\*/g')" | xargs grep -l "$SEARCH_TEXT" 2>/dev/null || true)
+MATCHING_FILES=$(git ls-files | grep -E "$(echo "$FILE_PATTERN" | sed 's/\*/.*/g')" \
+    | xargs grep -l "$ESCAPED_SEARCH" 2>/dev/null || true)
 
 if [ -z "$MATCHING_FILES" ]; then
     echo -e "${YELLOW}No files found containing '$SEARCH_TEXT'${NC}"
@@ -92,37 +76,33 @@ if [ -z "$MATCHING_FILES" ]; then
 fi
 
 echo -e "${GREEN}Found matching files:${NC}"
-echo "$MATCHING_FILES" | while read -r file; do
-    if [ -n "$file" ]; then
-        # Count occurrences in this file
-        count=$(grep -c "$SEARCH_TEXT" "$file" 2>/dev/null || echo "0")
-        echo -e "  ${GREEN}$file${NC} (${count} matches)"
-    fi
-done
+while read -r file; do
+    [ -z "$file" ] && continue
+    count=$(grep -c "$ESCAPED_SEARCH" "$file" 2>/dev/null || echo "0")
+    echo -e "  ${GREEN}$file${NC} (${count} matches)"
+done <<< "$MATCHING_FILES"
 echo ""
 
-# Show preview of changes if requested
-if [ "$PREVIEW_MODE" = true ]; then
+# Preview mode
+if $PREVIEW_MODE; then
     echo -e "${BLUE}Preview of changes:${NC}"
-    echo "$MATCHING_FILES" | while read -r file; do
-        if [ -n "$file" ]; then
-            echo -e "${YELLOW}--- $file ---${NC}"
-            grep -n "$SEARCH_TEXT" "$file" | head -5 | while read -r line; do
-                echo -e "${RED}- $line${NC}"
-                echo -e "${GREEN}+ $(echo "$line" | sed "s/$SEARCH_TEXT/$REPLACE_TEXT/g")${NC}"
-            done
-            # Show "..." if there are more than 5 matches
-            total_matches=$(grep -c "$SEARCH_TEXT" "$file")
-            if [ "$total_matches" -gt 5 ]; then
-                echo -e "${BLUE}... and $((total_matches - 5)) more matches${NC}"
-            fi
-            echo ""
+    while read -r file; do
+        [ -z "$file" ] && continue
+        echo -e "${YELLOW}--- $file ---${NC}"
+        grep -n "$ESCAPED_SEARCH" "$file" | head -5 | while read -r line; do
+            echo -e "${RED}- $line${NC}"
+            echo -e "${GREEN}+ $(echo "$line" | sed "s/$ESCAPED_SEARCH/$ESCAPED_REPLACE/g")${NC}"
+        done
+        total=$(grep -c "$ESCAPED_SEARCH" "$file" 2>/dev/null || echo "0")
+        if [ "$total" -gt 5 ]; then
+            echo -e "${BLUE}... and $((total - 5)) more matches${NC}"
         fi
-    done
+        echo ""
+    done <<< "$MATCHING_FILES"
     exit 0
 fi
 
-# Ask for confirmation
+# Confirm action
 echo -e "${YELLOW}This will modify the above files. Continue? (y/N):${NC} "
 read -r confirmation
 if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
@@ -130,46 +110,39 @@ if [[ ! "$confirmation" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Perform the replacement
+# Perform replacements
 echo -e "${BLUE}Performing replacements...${NC}"
 TOTAL_REPLACEMENTS=0
+while read -r file; do
+    [ -z "$file" ] && continue
 
-echo "$MATCHING_FILES" | while read -r file; do
-    if [ -n "$file" ]; then
-        # Count matches before replacement
-        before_count=$(grep -c "$SEARCH_TEXT" "$file" 2>/dev/null || echo "0")
+    # Count matches before replacement, normalize to 0
+    before_count=$(grep -c "$ESCAPED_SEARCH" "$file" 2>/dev/null || true)
+    before_count=$((before_count + 0))
 
-        if [ "$before_count" -gt 0 ]; then
-            # Create backup
-            cp "$file" "$file.bak"
+    if [ "$before_count" -gt 0 ]; then
+        cp "$file" "$file.bak"
 
-            # Perform replacement using sed
-            if sed -i "s|$SEARCH_TEXT|$REPLACE_TEXT|g" "$file"; then
-                # Count matches after replacement to verify
-                after_count=$(grep -c "$SEARCH_TEXT" "$file" 2>/dev/null || echo "0")
-                actual_replacements=$((before_count - after_count))
+        if sed -i "s|$ESCAPED_SEARCH|$ESCAPED_REPLACE|g" "$file"; then
+            after_count=$(grep -c "$ESCAPED_SEARCH" "$file" 2>/dev/null || true)
+            after_count=$((after_count + 0))
 
-                echo -e "  ${GREEN}✓ $file${NC} - ${actual_replacements} replacements"
-                TOTAL_REPLACEMENTS=$((TOTAL_REPLACEMENTS + actual_replacements))
+            actual_replacements=$((before_count - after_count))
+            TOTAL_REPLACEMENTS=$((TOTAL_REPLACEMENTS + actual_replacements))
 
-                # Remove backup if successful
-                rm "$file.bak"
-            else
-                echo -e "  ${RED}✗ Failed to process $file${NC}"
-                # Restore from backup
-                mv "$file.bak" "$file"
-            fi
+            echo -e "  ${GREEN}✓ $file${NC} - ${actual_replacements} replacements"
+            rm "$file.bak"
+        else
+            echo -e "  ${RED}✗ Failed to process $file${NC}"
+            mv "$file.bak" "$file"
         fi
     fi
-done
+done <<< "$MATCHING_FILES"
 
-echo ""
-echo -e "${GREEN}Replacement complete!${NC}"
-echo -e "Total replacements made: ${GREEN}$TOTAL_REPLACEMENTS${NC}"
-echo ""
+echo -e "\n${GREEN}Replacement complete!${NC}"
+echo -e "Total replacements made: ${GREEN}$TOTAL_REPLACEMENTS${NC}\n"
 echo -e "${BLUE}Next steps:${NC}"
 echo "1. Review changes: git diff"
 echo "2. Test your changes"
 echo "3. Stage changes: git add ."
 echo "4. Commit: git commit -m \"Replace '$SEARCH_TEXT' with '$REPLACE_TEXT'\""
-#  LocalWords:  newFunction oldFunction
