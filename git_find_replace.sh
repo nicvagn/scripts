@@ -13,12 +13,12 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 show_usage() {
-    echo "Usage: $0 \"search_text\" \"replace_text\" [file_pattern]"
+    echo "Usage: $1 \"search_text\" \"replace_text\" [file_pattern]"
     echo ""
     echo "Examples:"
-    echo "  $0 \"oldFunction\" \"newFunction\""
-    echo "  $0 \"TODO\" \"DONE\" \"*.js\""
-    echo "  $0 \"api.example.com\" \"api.newdomain.com\" \"*.config\""
+    echo "  $1 \"oldFunction\" \"newFunction\""
+    echo "  $1 \"TODO\" \"DONE\" \"*.js\""
+    echo "  $1 \"api.example.com\" \"api.newdomain.com\" \"*.config\""
     echo ""
     echo "Options:"
     echo "  -h, --help     - Show this help message"
