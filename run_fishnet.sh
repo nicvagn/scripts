@@ -1,6 +1,6 @@
 #!/bin/bash
-echo "fishnet started quit with any input"
+echo "[[[[ fishnet started ]]]]"
 systemctl --user start fishnet
-bash /home/nrv/scripts/nosleep.sh
+/home/nrv/scripts/nosleep.sh
 systemctl --user stop fishnet
 echo "systemctl --user stop fishnet ran"
