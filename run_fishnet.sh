@@ -1,6 +1,7 @@
 #!/bin/bash
 echo "[[[[ fishnet started ]]]]"
 systemctl --user start fishnet
-/home/nrv/scripts/nosleep.sh
+echo "Exit fishnet and allow sleep with input"
+/home/nrv/scripts/nosleep.sh > /dev/null
 systemctl --user stop fishnet
 echo "systemctl --user stop fishnet ran"
