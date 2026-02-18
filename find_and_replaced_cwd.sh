@@ -9,20 +9,17 @@ DIR=$(pwd)
 OLD="$1"
 NEW="$2"
 
-while true; do
-  echo "going to execute: grep -rl --exclude-dir=.git '$OLD' $DIR | xargs sed -i 's/$OLD/$NEW/g'"
-  read -p "Press Y to continue, or any other key to exit must be capital y" input
-  if [[ "$input" = "Y" ]]; then
-    echo "Replacing: $OLD  with $NEW in:" && pwd
-  else
+echo "Going to execute:"
+echo "grep -rlZ --exclude-dir=.git '$OLD' $DIR | xargs -0 -r sed -i 's|$OLD|$NEW|g'"
+
+read -p "Press Y to continue, or any other key to exit (must be capital Y): " input
+
+if [[ "$input" = "Y" ]]; then
+    echo "Replacing: $OLD with $NEW in $DIR"
+    grep -rlZ --exclude-dir=.git "$OLD" "$DIR" \
+        | xargs -0 -r sed -i "s|$OLD|$NEW|g"
+else
     echo "CANCELLED"
     exit 0
-  fi
-done
-
-# Recursive find-and-replace in current directory
-grep -rl --exclude-dir=.git "$OLD" $DIR | xargs sed -i "s/$OLD/$NEW/g"
-
-echo "Replaced '$OLD' with '$NEW' in all matching files in $DIR"
-
+fi
 #  LocalWords:  sed
