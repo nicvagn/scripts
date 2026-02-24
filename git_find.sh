@@ -54,43 +54,47 @@ echo -e "${BLUE}Git Repository Search${NC}"
 echo -e "Search for: ${YELLOW}$SEARCH_TEXT${NC}"
 echo -e "File pattern: ${YELLOW}$FILE_PATTERN${NC}\n"
 
-# Find matching files
 echo -e "${BLUE}Searching...${NC}"
 
 MATCHING_FILES=$(
-	grep -rIl \
-		--exclude-dir=.git \
-		--include="${FILE_PATTERN}" \
-		-- "$ESCAPED_SEARCH" "$ROOT" 2>/dev/null
+  grep -rIlF \
+    --exclude-dir=.git \
+    --include="${FILE_PATTERN:-*}" \
+    -- "$SEARCH_TEXT" "$ROOT" 2>/dev/null || true
 )
 
-if [ -z "$MATCHING_FILES" ]; then
-	echo -e "${YELLOW}No matches found${NC}"
-	exit 0
+if [[ -z "$MATCHING_FILES" ]]; then
+    echo -e "${YELLOW}No matches found${NC}"
+    exit 0
 fi
 
 echo -e "${GREEN}Files with matches:${NC}"
-while read -r file; do
-	[ -z "$file" ] && continue
-	count=$(grep -c "$SEARCH_TEXT" "$file" 2>/dev/null || echo "0")
-	echo -e "  ${GREEN}$file${NC} (${count} matches)"
-done <<<"$MATCHING_FILES"
 
+while IFS= read -r file; do
+    matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
+    count=$(printf '%s\n' "$matches" | wc -l)
+
+    echo -e "  ${GREEN}$file${NC} (${count} matches)"
+done <<< "$MATCHING_FILES"
 
 echo ""
 echo -e "${BLUE}Match details (first 5 per file):${NC}"
 
-while read -r file; do
-	[ -z "$file" ] && continue
-	echo -e "${YELLOW}--- $file ---${NC}"
-	grep -Fn "$SEARCH_TEXT" "$file" | head -5 | while read -r line; do
-		echo -e "  ${RED}$line${NC}"
-	done
-	total=$(grep -cF "$SEARCH_TEXT" "$file" 2>/dev/null)
-	if [[ $total -gt 5 ]]; then
-		echo -e "  ${BLUE}... and $((total - 5)) more matches${NC}"
-	fi
-	echo ""
-done <<<"$MATCHING_FILES"
+while IFS= read -r file; do
+    matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
+    count=$(printf '%s\n' "$matches" | wc -l)
+
+    echo -e "${YELLOW}--- $file ---${NC}"
+
+    printf '%s\n' "$matches" | head -5 | while IFS= read -r line; do
+        echo -e "  ${RED}$line${NC}"
+    done
+
+    if (( count > 5 )); then
+        echo -e "  ${BLUE}... and $((count - 5)) more matches${NC}"
+    fi
+
+    echo ""
+done <<< "$MATCHING_FILES"
 
 echo -e "${GREEN}Search complete.${NC}"
