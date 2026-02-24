@@ -5,6 +5,12 @@
 
 set -e  # Exit on any error
 
+# Validate arguments
+if [ $# -lt 1 ]; then
+    echo -e "${RED}Error: Missing required argument: search_text${NC}"
+    show_usage
+    exit 1
+fi
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,18 +40,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Ensure we are inside a Git repository
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo -e "${RED}Error: Not in a git repository${NC}"
-    exit 1
-fi
-
-# Validate arguments
-if [ $# -lt 1 ]; then
-    echo -e "${RED}Error: Missing required argument: search_text${NC}"
-    show_usage
-    exit 1
-fi
+# enter Git repository root
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+echo "git root: $ROOT"
 
 SEARCH_TEXT="$1"
 FILE_PATTERN="${2:-*}"
@@ -59,9 +56,13 @@ echo -e "File pattern: ${YELLOW}$FILE_PATTERN${NC}\n"
 
 # Find matching files
 echo -e "${BLUE}Searching...${NC}"
-MATCHING_FILES=$(git ls-files \
-    | grep -E "$(echo "$FILE_PATTERN" | sed 's/\*/.*/g')" \
-    | xargs grep -l "$ESCAPED_SEARCH" 2>/dev/null || true)
+
+MATCHING_FILES=$(
+  grep -rIl \
+    --exclude-dir=.git \
+    --include="${FILE_PATTERN}" \
+    -- "$ESCAPED_SEARCH" "$ROOT" 2>/dev/null
+)
 
 if [ -z "$MATCHING_FILES" ]; then
     echo -e "${YELLOW}No matches found${NC}"
