@@ -57,44 +57,44 @@ echo -e "File pattern: ${YELLOW}$FILE_PATTERN${NC}\n"
 echo -e "${BLUE}Searching...${NC}"
 
 MATCHING_FILES=$(
-  grep -rIlF \
-    --exclude-dir=.git \
-    --include="${FILE_PATTERN:-*}" \
-    -- "$SEARCH_TEXT" "$ROOT" 2>/dev/null || true
+	grep -rIlF \
+		--exclude-dir=.git \
+		--include="${FILE_PATTERN:-*}" \
+		-- "$SEARCH_TEXT" "$ROOT" 2>/dev/null || true
 )
 
 if [[ -z "$MATCHING_FILES" ]]; then
-    echo -e "${YELLOW}No matches found${NC}"
-    exit 0
+	echo -e "${YELLOW}No matches found${NC}"
+	exit 0
 fi
 
 echo -e "${GREEN}Files with matches:${NC}"
 
 while IFS= read -r file; do
-    matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
-    count=$(printf '%s\n' "$matches" | wc -l)
+	matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
+	count=$(printf '%s\n' "$matches" | wc -l)
 
-    echo -e "  ${GREEN}$file${NC} (${count} matches)"
-done <<< "$MATCHING_FILES"
+	echo -e "  ${GREEN}$file${NC} (${count} matches)"
+done <<<"$MATCHING_FILES"
 
 echo ""
 echo -e "${BLUE}Match details (first 5 per file):${NC}"
 
 while IFS= read -r file; do
-    matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
-    count=$(printf '%s\n' "$matches" | wc -l)
+	matches=$(grep -nF "$SEARCH_TEXT" "$file" 2>/dev/null || true)
+	count=$(printf '%s\n' "$matches" | wc -l)
 
-    echo -e "${YELLOW}--- $file ---${NC}"
+	echo -e "${YELLOW}--- $file ---${NC}"
 
-    printf '%s\n' "$matches" | head -5 | while IFS= read -r line; do
-        echo -e "  ${RED}$line${NC}"
-    done
+	printf '%s\n' "$matches" | head -5 | while IFS= read -r line; do
+		echo -e "  ${RED}$line${NC}"
+	done
 
-    if (( count > 5 )); then
-        echo -e "  ${BLUE}... and $((count - 5)) more matches${NC}"
-    fi
+	if ((count > 5)); then
+		echo -e "  ${BLUE}... and $((count - 5)) more matches${NC}"
+	fi
 
-    echo ""
-done <<< "$MATCHING_FILES"
+	echo ""
+done <<<"$MATCHING_FILES"
 
 echo -e "${GREEN}Search complete.${NC}"

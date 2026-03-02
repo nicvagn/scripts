@@ -1,6 +1,11 @@
 #!/bin/bash
-echo "[[[[ fishnet started ]]]]"
-systemctl --user start fishnet
-read -p "Exit fishnet and allow sleep with input"
-systemctl --user stop fishnet
-echo "systemctl --user stop fishnet ran"
+
+if systemctl --user is-active fishnet; then
+	echo "Exiting fishnet"
+	systemctl --user stop fishnet
+	echo "systemctl --user stop fishnet ran"
+else
+
+	systemctl --user start fishnet
+	echo "[[[[ fishnet started ]]]]"
+fi
