@@ -1,5 +1,5 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+echo "Is fishnet running? "
 if systemctl --user is-active fishnet; then
 	echo "Exiting fishnet"
 	systemctl --user stop fishnet
