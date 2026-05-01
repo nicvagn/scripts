@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [[ $# !=  1 ]]; then
-    pwd
+  pwd
 else
-    readlink -f $1
+  readlink -f $1
 fi
