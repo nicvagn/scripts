@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
-echo "sleep disabled"
-read -p "allow sleep with input" -n 1 -r
+systemctl --user mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
-sudo systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target
-
-echo "Can sleep again"
+echo "sleep masked"
