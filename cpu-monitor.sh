@@ -3,7 +3,7 @@
 # Reads directly from /sys (no lm-sensors needed)
 # Usage: bash cpu_monitor.sh [interval_seconds]
 
-INTERVAL="${1:-1}"
+INTERVAL="${1:-3}"
 
 # ANSI colors
 RED='\033[0;31m'
@@ -139,10 +139,10 @@ while true; do
     # Move cursor to top-left; clear screen on first pass
     tput cup 0 0
 
-    echo -e "${BLD}${CYN}╔════════════════════════════════════════════════════════════════════════╗${RST}"
+    echo -e "${BLD}${CYN}╔════════════════════════════════════════════════════════════════════════${RST}"
     printf "${BLD}${CYN}║${RST}  ${BLD}CPU Monitor${RST}  ·  source: %-26s${BLD}${CYN}${RST}\n" "$HWMON_NAME"
     printf "${BLD}${CYN}║${RST}  Refresh: ${INTERVAL}s  ·  %s%-35s${BLD}${CYN}${RST}\n" "" "$(date '+%H:%M:%S')"
-    echo -e "${BLD}${CYN}╠════════════════════════════════════════════════════════════════════════╣${RST}"
+    echo -e "${BLD}${CYN}╠════════════════════════════════════════════════════════════════════════${RST}"
 
     # ── Temperatures ──────────────────────────────────────────────────────
     echo -e "${BLD}${CYN}║${RST}  ${BLD}Temperatures${RST}"
@@ -163,7 +163,7 @@ while true; do
     # ── Frequencies ───────────────────────────────────────────────────────
     if [[ ${#FREQS[@]} -gt 0 ]]; then
         MAX_GHZ=6.0   # adjust if you have a faster CPU
-        echo -e "${BLD}${CYN}╠ ════════════════════════════════════════════════════════════════════════╣${RST}"
+        echo -e "${BLD}${CYN}╠═════════════════════════════════════════════════════════════════════${RST}"
         echo -e "${BLD}${CYN}║      ${RST}  ${BLD}Core Frequencies (GHz)${RST}"
 
         cols=2
@@ -188,9 +188,9 @@ while true; do
         done
     fi
 
-    echo -e "${BLD}${CYN}╠══════════════════════════════════════════════════════════════════╣${RST}"
+    echo -e "${BLD}${CYN}╠════════════════════════════════════════════════════════════════════════${RST}"
     echo -e "${BLD}${CYN}║      ${RST}  ${GRN}≤69°C OK${RST}  ${YEL}70–84°C Warm${RST}  ${RED}≥85°C Hot${RST}"
-    echo -e "${BLD}${CYN}╚══════════════════════════════════════════════════════════════════╝${RST}"
+    echo -e "${BLD}${CYN}╚════════════════════════════════════════════════════════════════════════${RST}"
     echo -e "  Press ${BLD}Ctrl+C${RST} to exit"
 
     sleep "$INTERVAL"
