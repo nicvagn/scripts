@@ -57,7 +57,7 @@ collect_temps() {
     done
 }
 
-# Read one temperature in °C (sysfs gives millidegrees)
+# Read one temperature in C (sysfs gives millidegrees)
 read_temp_c() {
     local path="$1"
     local raw
@@ -76,7 +76,7 @@ temp_color() {
     fi
 }
 
-# Read CPU frequency for each core (kHz → GHz)
+# Read CPU frequency for each core (kHz -> GHz)
 read_freqs() {
     local -n out_freqs=$1
     out_freqs=()
@@ -163,7 +163,8 @@ while true; do
     # ── Frequencies ───────────────────────────────────────────────────────
     if [[ ${#FREQS[@]} -gt 0 ]]; then
         MAX_GHZ=6.0   # adjust if you have a faster CPU
-        echo -e "${BLD}${CYN}╠═════════════════════════════════════════════════════════════════════${RST}"
+
+        echo -e "${BLD}${CYN}╠════════════════════════════════════════════════════════════════════════${RST}"
         echo -e "${BLD}${CYN}║      ${RST}  ${BLD}Core Frequencies (GHz)${RST}"
 
         cols=2
